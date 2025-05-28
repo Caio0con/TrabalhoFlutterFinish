@@ -1,20 +1,20 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:projetoquerinop2/entidades/item_todo.dart';
 import 'package:projetoquerinop2/textInput.dart';
-
 import 'dao.dart';
+import 'task_list.dart';
+
+/// Importações específicas para FFI em desktop/web
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
-  // Inicialização obrigatória do banco de dados para apps desktop (Windows/macOS/Linux).
-  // Não é necessária em Android/iOS.
-  // Inicializa o banco com sqflite_common_ffi
-  // Comentar caso esteja usando o emulador Android/iOS
-  //  sqfliteFfiInit();
-  // databaseFactory = databaseFactoryFfi;
-
+  if (!kIsWeb) {
+    // Inicializa o FFI para desktops (Windows/macOS/Linux)
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
   runApp(const MyApp());
 }
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -43,6 +43,7 @@ class _ListaTodo extends State<ListaTodo> {
 
   Future<void> _atualizarLista() async {
     final dados = await DataAccessObject.getTarefas();
+    print("Tarefas recuperadas: ${dados.length}");
     setState(() {
       _listaTarefas = dados;
     });
@@ -61,25 +62,36 @@ class _ListaTodo extends State<ListaTodo> {
   }
 
   Future<void> _finalizarTarefa(Map<String, dynamic> item) async {
-    await DataAccessObject.updateTarefa(item["id"],
-        item["prioridade"],
-        DateTime.now(),
-        DateTime.now(),
-        "F",
-        item["descricao"],
-        item["titulo"]);
-    await _atualizarLista();
+    await DataAccessObject.updateTarefa(
+      item["id"],
+      item["prioridade"],
+      DateTime.now(),
+      DateTime.now(),
+      "F",
+      item["descricao"],
+      item["titulo"],
+    );
+    _atualizarLista();
   }
 
-  Color getColorFromStatus(String status) {
-    switch (status) {
-      case 'A':
-        return Colors.red;
-      case 'F':
-        return Colors.green;
-      default:
-        return Colors.black;
-    }
+  void _editarTarefa(Map<String, dynamic> item) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return Container(
+          height: 500,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.only(top: 50, left: 30, right: 30),
+          child: EditarItem(
+            tarefa: item,
+            atualizar: _atualizarLista,
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -87,6 +99,7 @@ class _ListaTodo extends State<ListaTodo> {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () {
+          // Abre modal para adicionar nova tarefa
           showModalBottomSheet(
             context: context,
             isScrollControlled: true,
@@ -111,30 +124,11 @@ class _ListaTodo extends State<ListaTodo> {
         backgroundColor: Colors.blue,
         titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20),
       ),
-      body: ListView.builder(
-        itemCount: _listaTarefas.length,
-        itemBuilder: (context, index) => ListTile(
-          leading: Icon(Icons.task),
-          title: Text(_listaTarefas[index]["titulo"]),
-          subtitle: Text("${_listaTarefas[index]["descricao"]}"),
-          tileColor: getColorFromStatus(_listaTarefas[index]["status"]),
-          trailing:
-              Column(
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      _excluirTarefa(_listaTarefas[index]["id"]);
-                    },
-                    icon: Icon(Icons.delete),
-                  ),
-
-                ],
-              ),
-
-          onTap: () async {
-               await _finalizarTarefa(_listaTarefas[index]);
-          },
-        ),
+      body: TaskList(
+        tasks: _listaTarefas,
+        onDelete: _excluirTarefa,
+        onEdit: _editarTarefa,
+        onTap: _finalizarTarefa,
       ),
     );
   }
@@ -153,7 +147,6 @@ class _AdicionarItem extends State<AdicionarItem> {
   String titulo = "";
   String descricao = "";
   DateTime? dataSelecionada; // Variável para armazenar a data selecionada
-
   String _prioridadeSelecionada = 'Médio'; // prioridade padrão
 
   String prioridadeParaChar(String prioridade) {
@@ -170,114 +163,254 @@ class _AdicionarItem extends State<AdicionarItem> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        TextInput(
-          updateFunction: (s) {
-            setState(() {
-              titulo = s;
-            });
-          },
-          textLabel: "Titulo",
-        ),
-        TextInput(
-          updateFunction: (s) {
-            setState(() {
-              descricao = s;
-            });
-          },
-          textLabel: "Descrição",
-        ),
-        Container(
-          padding: const EdgeInsets.only(top: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                dataSelecionada == null
-                    ? "Nenhuma data selecionada"
-                    : "Data: ${dataSelecionada!.day}/${dataSelecionada!.month}/${dataSelecionada!.year}",
-                style: const TextStyle(fontSize: 16),
-              ),
-              TextButton(
-                onPressed: () async {
-                  DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                  );
-                  if (pickedDate != null) {
-                    setState(() {
-                      dataSelecionada = pickedDate;
-                    });
-                  }
-                },
-                child: const Text("Selecionar Data"),
-              ),
-            ],
-          ),
-        ),
-        DropdownButton<String>(
-          value: _prioridadeSelecionada,
-          items: const [
-            DropdownMenuItem(value: 'Alto', child: Text('Alto')),
-            DropdownMenuItem(value: 'Médio', child: Text('Médio')),
-            DropdownMenuItem(value: 'Baixo', child: Text('Baixo')),
-          ],
-          onChanged: (value) {
-            if (value != null) {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          TextInput(
+            updateFunction: (s) {
               setState(() {
-                _prioridadeSelecionada = value;
+                titulo = s;
               });
-            }
-          },
-        ),
-
-        Container(
-          padding: const EdgeInsets.only(top: 50),
-          child: TextButton(
-            onPressed: () async {
-              if (titulo.isEmpty ||
-                  descricao.isEmpty ||
-                  dataSelecionada == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      "Por favor, preencha todos os campos e selecione uma data.",
-                    ),
-                  ),
-                );
-                return;
-              }
-
-              // print("Título: $titulo");
-              // print("Descrição: $descricao");
-              // print("Data: ${dataSelecionada!.day}/${dataSelecionada!.month}/${dataSelecionada!.year}");
-
-              // Alguns valores estão fixos.
-              // TODO: substituir valores fixos pelas variáveis
-              DataAccessObject.createTarefa(
-                prioridadeParaChar(_prioridadeSelecionada),
-                dataSelecionada!,
-                dataSelecionada!,
-                "A",
-                descricao,
-                titulo,
-              ).then((a) {
-                widget.atualizar();
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Tarefa criada com sucesso!")),
-              );
-
-              Navigator.pop(context);
             },
-            style: ButtonStyle(alignment: Alignment.center),
-            child: const Text("Adicionar"),
+            textLabel: "Titulo",
           ),
-        ),
-      ],
+          TextInput(
+            updateFunction: (s) {
+              setState(() {
+                descricao = s;
+              });
+            },
+            textLabel: "Descrição",
+          ),
+          Container(
+            padding: const EdgeInsets.only(top: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  dataSelecionada == null
+                      ? "Nenhuma data selecionada"
+                      : "Data: ${dataSelecionada!.day}/${dataSelecionada!.month}/${dataSelecionada!.year}",
+                  style: const TextStyle(fontSize: 16),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    DateTime? pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (pickedDate != null) {
+                      setState(() {
+                        dataSelecionada = pickedDate;
+                      });
+                    }
+                  },
+                  child: const Text("Selecionar Data"),
+                ),
+              ],
+            ),
+          ),
+          DropdownButton<String>(
+            value: _prioridadeSelecionada,
+            items: const [
+              DropdownMenuItem(value: 'Alto', child: Text('Alto')),
+              DropdownMenuItem(value: 'Médio', child: Text('Médio')),
+              DropdownMenuItem(value: 'Baixo', child: Text('Baixo')),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  _prioridadeSelecionada = value;
+                });
+              }
+            },
+          ),
+          Container(
+            padding: const EdgeInsets.only(top: 50),
+            child: TextButton(
+              onPressed: () async {
+                if (titulo.isEmpty || descricao.isEmpty || dataSelecionada == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Por favor, preencha todos os campos e selecione uma data."),
+                    ),
+                  );
+                  return;
+                }
+
+                DataAccessObject.createTarefa(
+                  prioridadeParaChar(_prioridadeSelecionada),
+                  dataSelecionada!,
+                  dataSelecionada!,
+                  "A",
+                  descricao,
+                  titulo,
+                ).then((a) {
+                  widget.atualizar();
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Tarefa criada com sucesso!")),
+                );
+                Navigator.pop(context);
+              },
+              style: ButtonStyle(alignment: Alignment.center),
+              child: const Text("Adicionar"),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class EditarItem extends StatefulWidget {
+  final Map<String, dynamic> tarefa;
+  final Future<void> Function() atualizar;
+
+  const EditarItem({super.key, required this.tarefa, required this.atualizar});
+
+  @override
+  State<StatefulWidget> createState() => _EditarItem();
+}
+
+class _EditarItem extends State<EditarItem> {
+  late TextEditingController tituloController;
+  late TextEditingController descricaoController;
+  DateTime? dataSelecionada;
+  String _prioridadeSelecionada = 'Médio'; // valor padrão
+
+  @override
+  void initState() {
+    super.initState();
+    tituloController = TextEditingController(text: widget.tarefa["titulo"]);
+    descricaoController = TextEditingController(text: widget.tarefa["descricao"]);
+    // Se a tarefa possuir data, converta para DateTime; ajuste conforme seu armazenamento.
+    dataSelecionada = widget.tarefa["data"] ?? DateTime.now();
+    // Mapeia o caractere da prioridade para o texto correspondente
+    switch (widget.tarefa["prioridade"]) {
+      case 'A':
+        _prioridadeSelecionada = 'Alto';
+        break;
+      case 'B':
+        _prioridadeSelecionada = 'Baixo';
+        break;
+      case 'M':
+      default:
+        _prioridadeSelecionada = 'Médio';
+        break;
+    }
+  }
+
+  String prioridadeParaChar(String prioridade) {
+    switch (prioridade) {
+      case 'Alto':
+        return 'A';
+      case 'Baixo':
+        return 'B';
+      case 'Médio':
+      default:
+        return 'M';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          TextField(
+            controller: tituloController,
+            decoration: const InputDecoration(labelText: "Titulo"),
+          ),
+          TextField(
+            controller: descricaoController,
+            decoration: const InputDecoration(labelText: "Descrição"),
+          ),
+          Container(
+            padding: const EdgeInsets.only(top: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  dataSelecionada == null
+                      ? "Nenhuma data selecionada"
+                      : "Data: ${dataSelecionada!.day}/${dataSelecionada!.month}/${dataSelecionada!.year}",
+                  style: const TextStyle(fontSize: 16),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    DateTime? pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: dataSelecionada ?? DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (pickedDate != null) {
+                      setState(() {
+                        dataSelecionada = pickedDate;
+                      });
+                    }
+                  },
+                  child: const Text("Selecionar Data"),
+                ),
+              ],
+            ),
+          ),
+          DropdownButton<String>(
+            value: _prioridadeSelecionada,
+            items: const [
+              DropdownMenuItem(value: 'Alto', child: Text('Alto')),
+              DropdownMenuItem(value: 'Médio', child: Text('Médio')),
+              DropdownMenuItem(value: 'Baixo', child: Text('Baixo')),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  _prioridadeSelecionada = value;
+                });
+              }
+            },
+          ),
+          Container(
+            padding: const EdgeInsets.only(top: 50),
+            child: TextButton(
+              onPressed: () async {
+                if (tituloController.text.isEmpty ||
+                    descricaoController.text.isEmpty ||
+                    dataSelecionada == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Preencha todos os campos e selecione uma data."),
+                    ),
+                  );
+                  return;
+                }
+
+                await DataAccessObject.updateTarefa(
+                  widget.tarefa["id"],
+                  prioridadeParaChar(_prioridadeSelecionada),
+                  dataSelecionada!,
+                  dataSelecionada!,
+                  "A", // Mantém o status ativo (ou ajuste conforme necessário)
+                  descricaoController.text,
+                  tituloController.text,
+                ).then((_) {
+                  widget.atualizar();
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Tarefa editada com sucesso!")),
+                );
+                Navigator.pop(context);
+              },
+              style: ButtonStyle(alignment: Alignment.center),
+              child: const Text("Editar"),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
