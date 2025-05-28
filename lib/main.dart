@@ -5,7 +5,7 @@ import 'dao.dart';
 import 'task_list.dart';
 
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-
+// BIG TODO -> ARRUMAR A NOTIFICAÇÃO QUE APARECE EMBAIXO DO POP-UP DE CRIAR TAREFA, FAZER FICAR ENCIMA OU ALTERAR O POP-UP PFVR
 void main() {
   if (!kIsWeb) {
     sqfliteFfiInit();
