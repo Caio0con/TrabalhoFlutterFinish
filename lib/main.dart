@@ -4,12 +4,10 @@ import 'package:projetoquerinop2/textInput.dart';
 import 'dao.dart';
 import 'task_list.dart';
 
-/// Importações específicas para FFI em desktop/web
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
   if (!kIsWeb) {
-    // Inicializa o FFI para desktops (Windows/macOS/Linux)
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
@@ -99,7 +97,6 @@ class _ListaTodo extends State<ListaTodo> {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Abre modal para adicionar nova tarefa
           showModalBottomSheet(
             context: context,
             isScrollControlled: true,
@@ -146,8 +143,8 @@ class AdicionarItem extends StatefulWidget {
 class _AdicionarItem extends State<AdicionarItem> {
   String titulo = "";
   String descricao = "";
-  DateTime? dataSelecionada; // Variável para armazenar a data selecionada
-  String _prioridadeSelecionada = 'Médio'; // prioridade padrão
+  DateTime? dataSelecionada;
+  String _prioridadeSelecionada = 'Médio';
 
   String prioridadeParaChar(String prioridade) {
     switch (prioridade) {
@@ -279,16 +276,14 @@ class _EditarItem extends State<EditarItem> {
   late TextEditingController tituloController;
   late TextEditingController descricaoController;
   DateTime? dataSelecionada;
-  String _prioridadeSelecionada = 'Médio'; // valor padrão
+  String _prioridadeSelecionada = 'Médio';
 
   @override
   void initState() {
     super.initState();
     tituloController = TextEditingController(text: widget.tarefa["titulo"]);
     descricaoController = TextEditingController(text: widget.tarefa["descricao"]);
-    // Se a tarefa possuir data, converta para DateTime; ajuste conforme seu armazenamento.
     dataSelecionada = widget.tarefa["data"] ?? DateTime.now();
-    // Mapeia o caractere da prioridade para o texto correspondente
     switch (widget.tarefa["prioridade"]) {
       case 'A':
         _prioridadeSelecionada = 'Alto';
@@ -393,7 +388,7 @@ class _EditarItem extends State<EditarItem> {
                   prioridadeParaChar(_prioridadeSelecionada),
                   dataSelecionada!,
                   dataSelecionada!,
-                  "A", // Mantém o status ativo (ou ajuste conforme necessário)
+                  "A",
                   descricaoController.text,
                   tituloController.text,
                 ).then((_) {

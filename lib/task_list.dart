@@ -4,7 +4,7 @@ class TaskList extends StatelessWidget {
   final List<Map<String, dynamic>> tasks;
   final void Function(int) onDelete;
   final void Function(Map<String, dynamic>) onEdit;
-  final void Function(Map<String, dynamic>) onTap; // ação opcional ao tocar no item
+  final void Function(Map<String, dynamic>) onTap;
 
   const TaskList({
     Key? key,
@@ -27,7 +27,6 @@ class TaskList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Se a lista estiver vazia, mostra a mensagem; caso contrário, mostra a lista de tarefas.
     if (tasks.isEmpty) {
       return const Center(child: Text("Nenhuma tarefa adicionada"));
     }
