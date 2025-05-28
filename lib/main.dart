@@ -68,13 +68,47 @@ class ListaTodo extends StatefulWidget {
 
 class _ListaTodo extends State<ListaTodo> {
   List<Map<String, dynamic>> _listaTarefas = [];
+  List<Map<String, dynamic>> _tarefasFiltradas = [];
+  String _filtroTitulo = '';
+  String _filtroPrioridade = 'Todas';
+  DateTime? _filtroData;
 
   Future<void> _atualizarLista() async {
     final dados = await DataAccessObject.getTarefas();
-    print("Tarefas recuperadas: ${dados.length}");
     setState(() {
       _listaTarefas = dados;
+      _aplicarFiltro();
     });
+  }
+
+  void _aplicarFiltro() {
+    setState(() {
+      _tarefasFiltradas = _listaTarefas.where((tarefa) {
+        final tituloOk = _filtroTitulo.isEmpty ||
+            (tarefa['titulo']?.toLowerCase() ?? '').contains(_filtroTitulo.toLowerCase());
+        final prioridadeOk = _filtroPrioridade == 'Todas' ||
+            (tarefa['prioridade'] == _prioridadeParaChar(_filtroPrioridade));
+        final dataOk = _filtroData == null ||
+            (tarefa['data_vencimento'] != null &&
+             DateTime.tryParse(tarefa['data_vencimento'])?.day == _filtroData!.day &&
+             DateTime.tryParse(tarefa['data_vencimento'])?.month == _filtroData!.month &&
+             DateTime.tryParse(tarefa['data_vencimento'])?.year == _filtroData!.year);
+        return tituloOk && prioridadeOk && dataOk;
+      }).toList();
+    });
+  }
+
+  String _prioridadeParaChar(String prioridade) {
+    switch (prioridade) {
+      case 'Alta':
+        return 'A';
+      case 'Baixa':
+        return 'B';
+      case 'Média':
+        return 'M';
+      default:
+        return '';
+    }
   }
 
   @override
@@ -125,6 +159,92 @@ class _ListaTodo extends State<ListaTodo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(120),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: TextField(
+                decoration: const InputDecoration(
+                  labelText: 'Pesquisar por título',
+                  prefixIcon: Icon(Icons.search),
+                ),
+                onChanged: (value) {
+                  _filtroTitulo = value;
+                  _aplicarFiltro();
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: DropdownButton<String>(
+                      value: _filtroPrioridade,
+                      items: const [
+                        DropdownMenuItem(value: 'Todas', child: Text('Todas')),
+                        DropdownMenuItem(value: 'Alta', child: Text('Alta')),
+                        DropdownMenuItem(value: 'Média', child: Text('Média')),
+                        DropdownMenuItem(value: 'Baixa', child: Text('Baixa')),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            _filtroPrioridade = value;
+                            _aplicarFiltro();
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () async {
+                        DateTime? picked = await showDatePicker(
+                          context: context,
+                          initialDate: _filtroData ?? DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        setState(() {
+                          _filtroData = picked;
+                          _aplicarFiltro();
+                        });
+                      },
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Filtrar por data',
+                          prefixIcon: Icon(Icons.date_range),
+                        ),
+                        child: Text(
+                          _filtroData == null
+                              ? 'Todas'
+                              : '${_filtroData!.day}/${_filtroData!.month}/${_filtroData!.year}',
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.clear),
+                    tooltip: 'Limpar filtros',
+                    onPressed: () {
+                      setState(() {
+                        _filtroTitulo = '';
+                        _filtroPrioridade = 'Todas';
+                        _filtroData = null;
+                        _aplicarFiltro();
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           showModalBottomSheet(
@@ -146,13 +266,8 @@ class _ListaTodo extends State<ListaTodo> {
         elevation: 12,
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      // appBar: AppBar(
-      //   title: const Text("To Do"),
-      //   backgroundColor: Colors.blue,
-      //   titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20),
-      // ),
       body: TaskList(
-        tasks: _listaTarefas,
+        tasks: _tarefasFiltradas,
         onDelete: _excluirTarefa,
         onEdit: _editarTarefa,
         onTap: _finalizarTarefa,
