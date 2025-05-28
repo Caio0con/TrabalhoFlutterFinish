@@ -38,7 +38,21 @@ class TaskList extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           // color: _getColorFromStatus(item["status"]),
           child: ListTile(
-            leading: const Icon(Icons.task),
+            leading: Icon(
+              Icons.flag,
+              color: (() {
+                switch (item["prioridade"]) {
+                  case 'A':
+                    return Colors.redAccent.shade100;
+                  case 'M':
+                    return Colors.yellow.shade600;
+                  case 'B':
+                    return Colors.green.shade300;
+                  default:
+                    return Colors.grey;
+                }
+              })(),
+            ),
             title: Text(item["titulo"]),
             subtitle: Text(item["descricao"]),
             trailing: Row(

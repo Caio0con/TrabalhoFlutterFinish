@@ -73,10 +73,20 @@ class _ListaTodo extends State<ListaTodo> {
   String _filtroPrioridade = 'Todas';
   DateTime? _filtroData;
 
+  // No meu pc ele fica piscando, provavelmente pq fica atualizando toda hr -> TODO -> arrumar
   Future<void> _atualizarLista() async {
     final dados = await DataAccessObject.getTarefas();
+    final listaEditavel = List<Map<String, dynamic>>.from(dados);
+    listaEditavel.sort((a, b) {
+      const ordem = {'A': 0, 'M': 1, 'B': 2};
+      int cmp = (ordem[a['prioridade']] ?? 3).compareTo(ordem[b['prioridade']] ?? 3);
+      if (cmp != 0) return cmp;
+      final dataA = DateTime.tryParse(a['data_vencimento'] ?? '') ?? DateTime(2100);
+      final dataB = DateTime.tryParse(b['data_vencimento'] ?? '') ?? DateTime(2100);
+      return dataA.compareTo(dataB);
+    });
     setState(() {
-      _listaTarefas = dados;
+      _listaTarefas = listaEditavel;
       _aplicarFiltro();
     });
   }
