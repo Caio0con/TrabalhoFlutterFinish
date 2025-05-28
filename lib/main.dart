@@ -21,6 +21,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -42,9 +43,17 @@ class _ListaTodo extends State<ListaTodo> {
   List<Map<String, dynamic>> _listaTarefas = [];
 
   Future<void> _atualizarLista() async {
-    final dados = await DataAccessObject.getTarefas();
+    var dados = await DataAccessObject.getTarefas();
     setState(() {
-      _listaTarefas = dados;
+      // Cria uma cópia mutável da lista antes de ordenar
+      final listaMutavel = List<Map<String, dynamic>>.from(dados);
+      listaMutavel.sort((a, b) {
+        const prioridadeOrdem = {'A': 0, 'M': 1, 'B': 2};
+        return prioridadeOrdem[a['prioridade']]!.compareTo(
+          prioridadeOrdem[b['prioridade']]!,
+        );
+      });
+      _listaTarefas = listaMutavel;
     });
   }
 
@@ -61,14 +70,29 @@ class _ListaTodo extends State<ListaTodo> {
   }
 
   Future<void> _finalizarTarefa(Map<String, dynamic> item) async {
-    await DataAccessObject.updateTarefa(item["id"],
-        item["prioridade"],
-        DateTime.now(),
-        DateTime.now(),
-        "F",
-        item["descricao"],
-        item["titulo"]);
+    await DataAccessObject.updateTarefa(
+      item["id"],
+      item["prioridade"],
+      DateTime.now(),
+      DateTime.now(),
+      "F",
+      item["descricao"],
+      item["titulo"],
+    );
     await _atualizarLista();
+  }
+
+  Color getColorFromPriority(String priority) {
+    switch (priority) {
+      case 'A':
+        return Colors.red;
+      case 'M':
+        return Colors.yellow;
+      case 'B':
+        return const Color.fromARGB(255, 8, 161, 221);
+      default:
+        return Colors.grey;
+    }
   }
 
   Color getColorFromStatus(String status) {
@@ -78,7 +102,7 @@ class _ListaTodo extends State<ListaTodo> {
       case 'F':
         return Colors.green;
       default:
-        return Colors.black;
+        return Colors.grey;
     }
   }
 
@@ -117,22 +141,22 @@ class _ListaTodo extends State<ListaTodo> {
           leading: Icon(Icons.task),
           title: Text(_listaTarefas[index]["titulo"]),
           subtitle: Text("${_listaTarefas[index]["descricao"]}"),
-          tileColor: getColorFromStatus(_listaTarefas[index]["status"]),
-          trailing:
-              Column(
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      _excluirTarefa(_listaTarefas[index]["id"]);
-                    },
-                    icon: Icon(Icons.delete),
-                  ),
-
-                ],
+          tileColor: _listaTarefas[index]["status"] == "F"
+              ? Colors
+                    .green // Cor verde para tarefas finalizadas
+              : getColorFromPriority(_listaTarefas[index]["prioridade"]),
+          trailing: Column(
+            children: [
+              IconButton(
+                onPressed: () {
+                  _excluirTarefa(_listaTarefas[index]["id"]);
+                },
+                icon: Icon(Icons.delete),
               ),
-
+            ],
+          ),
           onTap: () async {
-               await _finalizarTarefa(_listaTarefas[index]);
+            await _finalizarTarefa(_listaTarefas[index]);
           },
         ),
       ),
@@ -199,22 +223,22 @@ class _AdicionarItem extends State<AdicionarItem> {
                     : "Data: ${dataSelecionada!.day}/${dataSelecionada!.month}/${dataSelecionada!.year}",
                 style: const TextStyle(fontSize: 16),
               ),
-              TextButton(
-                onPressed: () async {
-                  DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                  );
-                  if (pickedDate != null) {
-                    setState(() {
-                      dataSelecionada = pickedDate;
-                    });
-                  }
-                },
-                child: const Text("Selecionar Data"),
-              ),
+             TextButton(
+              onPressed: () async {
+              DateTime? pickedDate = await showDatePicker(
+                context: context,
+                  initialDate: DateTime.now(),
+                    firstDate: DateTime.now(), // Define a data mínima como a data atual
+                      lastDate: DateTime(2100),
+              );
+    if (pickedDate != null) {
+      setState(() {
+        dataSelecionada = pickedDate;
+      });
+    }
+  },
+  child: const Text("Selecionar Data"),
+),
             ],
           ),
         ),
