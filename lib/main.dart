@@ -72,6 +72,8 @@ class _ListaTodo extends State<ListaTodo> {
   String _filtroTitulo = '';
   String _filtroPrioridade = 'Todas';
   DateTime? _filtroData;
+  Set<int> _tarefasAnimando = {};
+  Map<int, Color> _corAnimacao = {};
 
   // No meu pc ele fica piscando, provavelmente pq fica atualizando toda hr -> TODO -> arrumar
   Future<void> _atualizarLista() async {
@@ -129,11 +131,25 @@ class _ListaTodo extends State<ListaTodo> {
 
   // Métodos CRUD
   Future<void> _excluirTarefa(int id) async {
+    setState(() {
+      _tarefasAnimando.add(id);
+      _corAnimacao[id] = Colors.red.shade200;
+    });
+    await Future.delayed(const Duration(milliseconds: 500));
     await DataAccessObject.deleteTarefa(id);
+    setState(() {
+      _tarefasAnimando.remove(id);
+      _corAnimacao.remove(id);
+    });
     _atualizarLista();
   }
 
   Future<void> _finalizarTarefa(Map<String, dynamic> item) async {
+    setState(() {
+      _tarefasAnimando.add(item["id"]);
+      _corAnimacao[item["id"]] = Colors.green.shade200;
+    });
+    await Future.delayed(const Duration(milliseconds: 500));
     await DataAccessObject.updateTarefa(
       item["id"],
       item["prioridade"],
@@ -143,6 +159,10 @@ class _ListaTodo extends State<ListaTodo> {
       item["descricao"],
       item["titulo"],
     );
+    setState(() {
+      _tarefasAnimando.remove(item["id"]);
+      _corAnimacao.remove(item["id"]);
+    });
     _atualizarLista();
   }
 
@@ -281,6 +301,8 @@ class _ListaTodo extends State<ListaTodo> {
         onDelete: _excluirTarefa,
         onEdit: _editarTarefa,
         onTap: _finalizarTarefa,
+        tarefasAnimando: _tarefasAnimando,
+        corAnimacao: _corAnimacao,
       ),
     );
   }
