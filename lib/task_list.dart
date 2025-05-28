@@ -14,16 +14,16 @@ class TaskList extends StatelessWidget {
     required this.onTap,
   }) : super(key: key);
 
-  Color _getColorFromStatus(String status) {
-    switch (status) {
-      case 'A':
-        return Colors.red[200]!;
-      case 'F':
-        return Colors.green[200]!;
-      default:
-        return Colors.grey[200]!;
-    }
-  }
+  // Color _getColorFromStatus(String status) {
+  //   switch (status) {
+  //     case 'A':
+  //       return Colors.red[200]!;
+  //     case 'F':
+  //       return Colors.green[200]!;
+  //     default:
+  //       return Colors.grey[200]!;
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +36,7 @@ class TaskList extends StatelessWidget {
         final item = tasks[index];
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          color: _getColorFromStatus(item["status"]),
+          // color: _getColorFromStatus(item["status"]),
           child: ListTile(
             leading: const Icon(Icons.task),
             title: Text(item["titulo"]),

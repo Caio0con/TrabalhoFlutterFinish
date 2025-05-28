@@ -24,7 +24,37 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const ListaTodo(),
+      home: const PaginaPrincipal(),
+    );
+  }
+}
+
+class PaginaPrincipal extends StatelessWidget {
+  const PaginaPrincipal({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("To Do"),
+          backgroundColor: Colors.blue,
+          titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20),
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: "Tarefas"),
+              Tab(text: "Histórico"),
+            ],
+          ),
+        ),
+        body: const TabBarView(
+          children: [
+            ListaTodo(),
+            HistoricoPage(),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -116,11 +146,11 @@ class _ListaTodo extends State<ListaTodo> {
         elevation: 12,
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      appBar: AppBar(
-        title: const Text("To Do"),
-        backgroundColor: Colors.blue,
-        titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20),
-      ),
+      // appBar: AppBar(
+      //   title: const Text("To Do"),
+      //   backgroundColor: Colors.blue,
+      //   titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20),
+      // ),
       body: TaskList(
         tasks: _listaTarefas,
         onDelete: _excluirTarefa,
@@ -406,6 +436,79 @@ class _EditarItem extends State<EditarItem> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// pagina para o historico:
+class HistoricoPage extends StatefulWidget {
+  const HistoricoPage({super.key});
+
+  @override
+  State<HistoricoPage> createState() => _HistoricoPageState();
+}
+
+class _HistoricoPageState extends State<HistoricoPage> {
+  List<Map<String, dynamic>> _historico = [];
+
+  Future<void> _carregarHistorico() async {
+    final dados = await DataAccessObject.getTarefasFinalizadas();
+    setState(() {
+      _historico = dados;
+    });
+  }
+
+  Future<void> _excluirHistorico(int id) async {
+    await DataAccessObject.deleteTarefa(id);
+    _carregarHistorico();
+  }
+
+  Future<void> _desfazerTarefa(Map<String, dynamic> item) async {
+    await DataAccessObject.updateTarefa(
+      item["id"],
+      item["prioridade"],
+      DateTime.parse(item["data_vencimento"]),
+      DateTime.parse(item["data_criacao"]),
+      "A",
+      item["descricao"],
+      item["titulo"],
+    );
+    _carregarHistorico();
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarHistorico();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      itemCount: _historico.length,
+      itemBuilder: (context, index) {
+        final item = _historico[index];
+        return ListTile(
+          title: Text(item['titulo'] ?? ''),
+          subtitle: Text(item['descricao'] ?? ''),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.undo, color: Colors.orange),
+                onPressed: () => _desfazerTarefa(item),
+                tooltip: "Desfazer",
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () => _excluirHistorico(item['id']),
+                tooltip: "Excluir",
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
