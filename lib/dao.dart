@@ -48,7 +48,12 @@ class DataAccessObject {
 
   static Future<List<Map<String, dynamic>>> getTarefas() async {
     final db = await DataAccessObject.db();
-    return db.query("tarefas", orderBy: "titulo");
+    return db.query(
+      "tarefas",
+      where: "status != ?",
+      whereArgs: ["F"],
+      orderBy: "titulo",
+    );
   }
 
   static Future<List<Map<String, dynamic>>> getTarefa(int id) async {
@@ -90,5 +95,15 @@ class DataAccessObject {
       whereArgs: [id],
     );
     return resultado;
+  }
+
+  static Future<List<Map<String, dynamic>>> getTarefasFinalizadas() async {
+    final db = await DataAccessObject.db();
+    return db.query(
+      "tarefas",
+      where: "status = ?",
+      whereArgs: ["F"],
+      orderBy: "titulo",
+    );
   }
 }
