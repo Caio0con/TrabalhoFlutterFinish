@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projetoquerinop2/text_extension.dart';
 
 class TaskList extends StatelessWidget {
   final List<Map<String, dynamic>> tasks;
@@ -61,7 +62,12 @@ class TaskList extends StatelessWidget {
               })(),
             ),
             title: Text(item["titulo"]),
-            subtitle: Text(item["descricao"]),
+            subtitle: RichText(
+              text: TextSpan(
+                style: Theme.of(context).textTheme.bodyMedium,
+                children: parseDescricaoComCheckbox(item["descricao"] ?? ''),
+              ),
+            ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

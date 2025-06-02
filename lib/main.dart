@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:projetoquerinop2/textInput.dart';
+import 'package:projetoquerinop2/text_extension.dart';
 import 'dao.dart';
 import 'task_list.dart';
 
@@ -499,7 +500,9 @@ class _EditarItem extends State<EditarItem> {
           ),
           TextField(
             controller: descricaoController,
+            keyboardType: TextInputType.multiline,
             decoration: const InputDecoration(labelText: "Descrição"),
+            maxLines: null,
           ),
           Container(
             padding: const EdgeInsets.only(top: 20),
@@ -639,7 +642,12 @@ class _HistoricoPageState extends State<HistoricoPage> {
         final item = _historico[index];
         return ListTile(
           title: Text(item['titulo'] ?? ''),
-          subtitle: Text(item['descricao'] ?? ''),
+          subtitle: RichText(
+            text: TextSpan(
+              style: Theme.of(context).textTheme.bodyMedium,
+              children: parseDescricaoComCheckbox(item['descricao'] ?? ''),
+            ),
+          ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
