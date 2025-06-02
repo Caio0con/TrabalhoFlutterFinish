@@ -349,6 +349,7 @@ class _AdicionarItem extends State<AdicionarItem> {
               });
             },
             textLabel: "Titulo",
+            maxLines: 1,
           ),
           TextInput(
             updateFunction: (s) {
@@ -357,6 +358,7 @@ class _AdicionarItem extends State<AdicionarItem> {
               });
             },
             textLabel: "Descrição",
+            maxLines: null,
           ),
           Container(
             padding: const EdgeInsets.only(top: 20),
@@ -497,6 +499,7 @@ class _EditarItem extends State<EditarItem> {
           TextField(
             controller: tituloController,
             decoration: const InputDecoration(labelText: "Titulo"),
+            maxLines: 1,
           ),
           TextField(
             controller: descricaoController,

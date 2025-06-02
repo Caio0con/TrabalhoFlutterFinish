@@ -28,7 +28,7 @@ class _textInput extends State<TextInput> {
       controller: textController,
       onChanged: widget.updateFunction,
       keyboardType: TextInputType.multiline,
-      maxLines: null
+      maxLines: widget.maxLines
     );
   }
 }
