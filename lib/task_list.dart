@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:projetoquerinop2/text_extension.dart';
 
 class TaskList extends StatelessWidget {
   final List<Map<String, dynamic>> tasks;
@@ -10,14 +9,14 @@ class TaskList extends StatelessWidget {
   final Map<int, Color> corAnimacao;
 
   const TaskList({
-    Key? key,
+    super.key,
     required this.tasks,
     required this.onDelete,
     required this.onEdit,
     required this.onTap,
     required this.tarefasAnimando,
     required this.corAnimacao,
-  }) : super(key: key);
+  });
 
   // Color _getWhichColor(final isAnimando) {
   //   switch (isAnimando) {
@@ -62,12 +61,7 @@ class TaskList extends StatelessWidget {
               })(),
             ),
             title: Text(item["titulo"]),
-            subtitle: RichText(
-              text: TextSpan(
-                style: Theme.of(context).textTheme.bodyMedium,
-                children: parseDescricaoComCheckbox(item["descricao"] ?? ''),
-              ),
-            ),
+            subtitle: Text(item["descricao"]),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

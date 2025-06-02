@@ -1,13 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:projetoquerinop2/textInput.dart';
+import 'package:projetoquerinop2/text_input.dart';
 import 'package:projetoquerinop2/text_extension.dart';
 import 'dao.dart';
 import 'task_list.dart';
 import 'utils.dart';
 
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-// BIG TODO -> ARRUMAR A NOTIFICAÇÃO QUE APARECE EMBAIXO DO POP-UP DE CRIAR TAREFA, FAZER FICAR ENCIMA OU ALTERAR O POP-UP PFVR
 void main() {
   if (!kIsWeb) {
     sqfliteFfiInit();
@@ -75,8 +74,8 @@ class _ListaTodo extends State<ListaTodo> {
   String _filtroTitulo = '';
   String _filtroPrioridade = 'Todas';
   DateTime? _filtroData;
-  Set<int> _tarefasAnimando = {};
-  Map<int, Color> _corAnimacao = {};
+  final Set<int> _tarefasAnimando = {};
+  final Map<int, Color> _corAnimacao = {};
 
   // No meu pc ele fica piscando, provavelmente pq fica atualizando toda hr -> TODO -> arrumar
   Future<void> _atualizarLista() async {

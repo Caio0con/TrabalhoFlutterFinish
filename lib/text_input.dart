@@ -14,11 +14,11 @@ class TextInput extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() {
-    return _textInput();
+    return _TextInput();
   }
 }
 
-class _textInput extends State<TextInput> {
+class _TextInput extends State<TextInput> {
   final textController = TextEditingController();
 
   @override
