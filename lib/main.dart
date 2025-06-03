@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:projetoquerinop2/textInput.dart';
+import 'package:projetoquerinop2/text_input.dart';
 import 'package:projetoquerinop2/text_extension.dart';
 import 'dao.dart';
 import 'task_list.dart';
+import 'utils.dart';
 
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-// BIG TODO -> ARRUMAR A NOTIFICAÇÃO QUE APARECE EMBAIXO DO POP-UP DE CRIAR TAREFA, FAZER FICAR ENCIMA OU ALTERAR O POP-UP PFVR
 void main() {
   if (!kIsWeb) {
     sqfliteFfiInit();
@@ -74,8 +74,8 @@ class _ListaTodo extends State<ListaTodo> {
   String _filtroTitulo = '';
   String _filtroPrioridade = 'Todas';
   DateTime? _filtroData;
-  Set<int> _tarefasAnimando = {};
-  Map<int, Color> _corAnimacao = {};
+  final Set<int> _tarefasAnimando = {};
+  final Map<int, Color> _corAnimacao = {};
 
   // No meu pc ele fica piscando, provavelmente pq fica atualizando toda hr -> TODO -> arrumar
   Future<void> _atualizarLista() async {
@@ -410,27 +410,20 @@ class _AdicionarItem extends State<AdicionarItem> {
             child: TextButton(
               onPressed: () async {
                 if (titulo.isEmpty || descricao.isEmpty || dataSelecionada == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Por favor, preencha todos os campos e selecione uma data."),
-                    ),
-                  );
+                  showCenteredNotification(context, "Por favor, preencha todos os campos e selecione uma data.");
                   return;
                 }
 
-                DataAccessObject.createTarefa(
+                await DataAccessObject.createTarefa(
                   prioridadeParaChar(_prioridadeSelecionada),
                   dataSelecionada!,
                   dataSelecionada!,
                   "A",
                   descricao,
                   titulo,
-                ).then((a) {
-                  widget.atualizar();
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Tarefa criada com sucesso!")),
                 );
+                widget.atualizar();
+                showCenteredNotification(context, "Tarefa criada com sucesso!");
                 Navigator.pop(context);
               },
               style: ButtonStyle(alignment: Alignment.center),
@@ -559,11 +552,7 @@ class _EditarItem extends State<EditarItem> {
                 if (tituloController.text.isEmpty ||
                     descricaoController.text.isEmpty ||
                     dataSelecionada == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Preencha todos os campos e selecione uma data."),
-                    ),
-                  );
+                  showCenteredNotification(context, "Preencha todos os campos e selecione uma data.");
                   return;
                 }
 
@@ -579,9 +568,7 @@ class _EditarItem extends State<EditarItem> {
                   widget.atualizar();
                 });
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Tarefa editada com sucesso!")),
-                );
+                showCenteredNotification(context, "Tarefa editada com sucesso!");
                 Navigator.pop(context);
               },
               style: ButtonStyle(alignment: Alignment.center),
