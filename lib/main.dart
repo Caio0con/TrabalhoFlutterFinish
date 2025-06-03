@@ -6,12 +6,12 @@ import 'dao.dart';
 import 'task_list.dart';
 import 'utils.dart';
 
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+//import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 void main() {
-  if (!kIsWeb) {
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-  }
+  // if (!kIsWeb) {
+  //   sqfliteFfiInit();
+  //   databaseFactory = databaseFactoryFfi;
+  // }
   runApp(const MyApp());
 }
 class MyApp extends StatelessWidget {
@@ -209,7 +209,7 @@ class _ListaTodo extends State<ListaTodo> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
               child: Row(
                 children: [
                   Expanded(
